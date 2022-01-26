@@ -12,6 +12,7 @@ export class MainGroup implements IGroup {
 
     constructor() {
         this.group = new Object3D();
+        this.group.rotateX(Math.PI / 2);
     }
 
     getPickableNodes(): IGraphic[] {
