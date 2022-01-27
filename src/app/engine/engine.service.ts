@@ -30,6 +30,10 @@ export class EngineService {
         this.dataAdapter = new DataAdapter(trajectory);
         const directionPlanGraphic = new DirectionPlanGraphic(this.dataAdapter);
         this.mainGroup.addNode(directionPlanGraphic);
+
+        // create train track graphic
+        const trackGraphic = EngineCommon.createTrack(this.dataAdapter.getTrajectory());
+        this.mainGroup.addNode(trackGraphic);
       });
 
       this.mockData.getTunnel().subscribe((tunnels: ITunnelDesc[]) => {
