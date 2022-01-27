@@ -111,7 +111,7 @@ export class TrackGraphic extends AbstractGraphic {
 
         let tangent;
         const normal = new THREE.Vector3();
-        const binormal = new THREE.Vector3(0, 1, 0);
+        const binormal = new THREE.Vector3(0, 0, 1);
 
         const t = []; // tangents
         const n = []; // normals
@@ -124,7 +124,7 @@ export class TrackGraphic extends AbstractGraphic {
 
             normal.crossVectors(tangent, binormal);
 
-            normal.y = 0; // to prevent lateral slope of the road
+            normal.z = 0; // to prevent lateral slope of the road
 
             normal.normalize();
             n.push(normal.clone());
@@ -139,8 +139,8 @@ export class TrackGraphic extends AbstractGraphic {
         for (let j = 0; j < lss; j++) {  // length
             for (let i = 0; i < wss; i++) { // width
                 x = points[j].x + dw[i] * n[j].x;
-                y = points[j].y;
-                z = points[j].z + dw[i] * n[j].z;
+                z = points[j].z;
+                y = points[j].y + dw[i] * n[j].y;
 
                 vertices[posIdx] = x;
                 vertices[posIdx + 1] = y;
