@@ -119,9 +119,9 @@ export class View implements IView {
             0.1,
             2000
         );
-        this.camera.position.x = 120;
-        this.camera.position.y = 0;
-        this.camera.position.z = 0;
+        this.camera.position.x = -5;
+        this.camera.position.y = 5;
+        this.camera.position.z = 5;
     }
 
     private readonly setupRenderer = () => {
@@ -136,7 +136,7 @@ export class View implements IView {
 
     private readonly setupControl = () => {
         this.controls = new OrbitControls(this.camera, this.canvas);
-        this.controls.target.set(0, -20, 0);
+        this.controls.target.set(0, 0, 0);
         this.controls.update();
     }
 
