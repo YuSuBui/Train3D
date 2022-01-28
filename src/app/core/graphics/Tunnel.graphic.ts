@@ -1,7 +1,6 @@
 import { AbstractGraphic } from "./Abstract.graphic";
 import * as THREE from "three";
 import { CatmullRomCurve3, Vector3 } from "three";
-import { Flow } from "three/examples/jsm/modifiers/CurveModifier.js";
 import { ITunnelDesc } from "src/app/data/interfaces/IMockData";
 
 export class TunnelGraphic extends AbstractGraphic {
@@ -11,39 +10,50 @@ export class TunnelGraphic extends AbstractGraphic {
         super();
         const curve3 = new THREE.CatmullRomCurve3(trajectory);
         this.build(parameters, curve3);
-        this.getNode().add(this.tunnel.object3D);
+        this.getNode().add(this.tunnel);
     }
 
     private build = (parameters: ITunnelDesc, curve: CatmullRomCurve3) => {
-        const geometry = this.createGeometry(parameters.bodyOD, parameters.bodyID, parameters.length);
-        geometry.rotateY(Math.PI / 2);
-        geometry.rotateX(-Math.PI / 2);
+        const tunnelCurve = this.extractCurve(curve, parameters.startAt, parameters.length);
         const material = this.createMaterial();
-
+        const geometry = this.createGeometry(parameters.bodyOD, parameters.bodyID, parameters.length, tunnelCurve);
         const tunnel = new THREE.Mesh(geometry, material);
-        const flowSteps = Math.round(Math.round(curve.getLength()) * 2);
 
-        this.tunnel = new Flow(tunnel, flowSteps);
-        this.tunnel.updateCurve(0, curve);
-        this.tunnel.uniforms.spineOffset.value = (parameters.startAt);
+        this.tunnel = tunnel;
     }
 
-    private createGeometry = (outerRadius: number, innerRadius: number, length: number) => {
-        const sAngle = THREE.MathUtils.degToRad(0);
-        const eAngle = THREE.MathUtils.degToRad(180);
+    private extractCurve = (curve: CatmullRomCurve3, start: number, length: number) => {
+        const segment = 2;
+        const childCurve = [];
+        const flowSteps = Math.round(Math.round(curve.getLength()) * segment);
+        const points = curve.getPoints(flowSteps);
+        const end = start + length;
+
+        for (let i = start * segment; i <= end * segment; i++) {
+            childCurve.push(points[i]);
+        }
+
+        return new THREE.CatmullRomCurve3(childCurve);
+    }
+
+    private createGeometry = (outerRadius: number, innerRadius: number, length: number, curve: CatmullRomCurve3) => {
+        const sAngle = THREE.MathUtils.degToRad(-90);
+        const eAngle = THREE.MathUtils.degToRad(90);
 
         const shape = new THREE.Shape();
 
         shape.absarc(0, 0, outerRadius, sAngle, eAngle, false);
         shape.absarc(0, 0, innerRadius, eAngle, sAngle, true);
-        shape.lineTo(outerRadius, 0);
-        shape.lineTo(-outerRadius, 0);
+        // shape.lineTo(outerRadius, 0);
+        // shape.lineTo(-outerRadius, 0);
 
+        const flowSteps = Math.round(Math.round(curve.getLength()) * 2);
         return new THREE.ExtrudeGeometry(shape, {
-            steps: 100,
-            curveSegments: 100,
+            steps: flowSteps,
+            curveSegments: flowSteps,
             bevelEnabled: false,
-            depth: length
+            depth: length,
+            extrudePath: curve
         });
     }
 
