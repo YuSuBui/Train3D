@@ -1,10 +1,11 @@
 import { ElementRef, Injectable } from '@angular/core';
+import { Color } from 'three';
 import { DirectionPlanGraphic } from '../core/graphics/DirectionPlan.graphic';
 import { IGroup } from '../core/interfaces/IGroup';
 import { IViewer } from '../core/interfaces/IViewer';
 import { DataAdapter } from '../data/DataAdapter';
 import { IDataAdapter } from '../data/interfaces/IDataAdapter';
-import { ITrajectoryDesc, ITunnelDesc } from '../data/interfaces/IMockData';
+import { ITrajectoryDesc, ITunnelDesc, TunnelType } from '../data/interfaces/IMockData';
 import { MockDataService } from '../services/mock-data.service';
 import { EngineCommon } from './engine.common';
 
@@ -39,6 +40,9 @@ export class EngineService {
       this.mockData.getTunnel().subscribe((tunnels: ITunnelDesc[]) => {
         tunnels.forEach((tunnel: ITunnelDesc) => {
           const tunnelGraphic = EngineCommon.createTunnel(tunnel, this.dataAdapter.getTrajectory());
+          if (tunnel.type === TunnelType.UNDER) {
+            tunnelGraphic.getStyle().setOpacity(0.5);
+          }
           this.mainGroup.addNode(tunnelGraphic);
         });
       });

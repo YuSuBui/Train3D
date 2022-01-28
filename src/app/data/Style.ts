@@ -17,6 +17,7 @@ export class Style extends AbstractPropertyModel implements IStyle {
     constructor(listener?: IPropertyChangeListener) {
         super(listener);
         this.color = new THREE.Color(0x0000ff);
+        this.opacity = 1;
     }
 
     getColor(): Color {
@@ -28,6 +29,7 @@ export class Style extends AbstractPropertyModel implements IStyle {
         this.color = color;
         this.firePropertyChange(StyleProperty.SINGLE_COLOR, oldValue, color, this);
     }
+
     getOpacity(): number {
         return this.opacity;
     }

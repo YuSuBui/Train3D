@@ -1,16 +1,51 @@
 import { AbstractGraphic } from "./Abstract.graphic";
 import * as THREE from "three";
-import { CatmullRomCurve3, Vector3 } from "three";
-import { ITunnelDesc } from "src/app/data/interfaces/IMockData";
+import { CatmullRomCurve3, MeshStandardMaterial, Vector3 } from "three";
+import { ITunnelDesc, TunnelType } from "src/app/data/interfaces/IMockData";
+import { FRESNELSHADER } from "./interfaces/IFresnelShader";
+import { IPropertyChangeListener } from "src/app/data/interfaces/IPropertyChangeListener";
+import { IStyle } from "src/app/data/interfaces/IStyle";
+import { Style, StyleProperty } from "src/app/data/Style";
 
-export class TunnelGraphic extends AbstractGraphic {
+export class TunnelGraphic extends AbstractGraphic implements IPropertyChangeListener {
+    public IPropertyChangeListener = 'TunnelGraphic';
+
     private tunnel!: any;
+    private type!: TunnelType;
+    private style!: IStyle;
 
     constructor(parameters: ITunnelDesc, trajectory: Vector3[]) {
         super();
+        this.setStyle();
+        this.type = parameters.type;
         const curve3 = new THREE.CatmullRomCurve3(trajectory);
         this.build(parameters, curve3);
         this.getNode().add(this.tunnel);
+    }
+
+    private readonly setStyle = () => {
+        this.style = new Style();
+        this.style.addPropertyChangeListener(this);
+    }
+
+    public getStyle(): IStyle {
+        return this.style;
+    }
+
+    public onPropertyChange(property: string, oldValue: any, newValue: any, object: any): void | Promise<void> {
+        if (property === StyleProperty.SINGLE_COLOR) {
+            this.rebuildMaterial();
+        }
+        if (property === StyleProperty.OPACITY) {
+            this.rebuildMaterial();
+        }
+        
+    }
+
+    private readonly rebuildMaterial = () => {
+        const newMaterial = this.createMaterial();
+        this.tunnel.material = newMaterial;
+        this.tunnel.material.needsUpdate = true;
     }
 
     private build = (parameters: ITunnelDesc, curve: CatmullRomCurve3) => {
@@ -38,8 +73,19 @@ export class TunnelGraphic extends AbstractGraphic {
     }
 
     private createGeometry = (outerRadius: number, innerRadius: number, length: number, curve: CatmullRomCurve3) => {
-        const sAngle = THREE.MathUtils.degToRad(-90);
-        const eAngle = THREE.MathUtils.degToRad(90);
+        let sAngle = 0;
+        let eAngle = 0;
+
+        switch (this.type) {
+            case TunnelType.UNDER:
+                sAngle = THREE.MathUtils.degToRad(0);
+                eAngle = THREE.MathUtils.degToRad(360);
+                break;
+            case TunnelType.NORMAL:
+            default:
+                sAngle = THREE.MathUtils.degToRad(-90);
+                eAngle = THREE.MathUtils.degToRad(90);
+        }
 
         const shape = new THREE.Shape();
 
@@ -59,9 +105,32 @@ export class TunnelGraphic extends AbstractGraphic {
     }
 
     private createMaterial = () => {
+        if (this.type === TunnelType.UNDER) {
+            return this.createFresnelMaterial();
+        }
+        return this.createNormalMaterial()
+    }
+
+    private createNormalMaterial = () => {
         return new THREE.MeshStandardMaterial({
-            color: new THREE.Color(0xffff00),
+            color: this.style.getColor(),
             side: THREE.DoubleSide
         });
+    }
+
+    private createFresnelMaterial = () => {
+        const uniform = {
+            color: {
+              type: "c",
+              value: this.style.getColor(),
+            },
+            u_opacity: { value: this.style.getOpacity() }
+          }
+          return new THREE.ShaderMaterial({
+            uniforms: uniform,
+            vertexShader: FRESNELSHADER.vertexShader,
+            fragmentShader: FRESNELSHADER.fragmentShader,
+            transparent: this.style.getOpacity() < 1
+          });
     }
 }
