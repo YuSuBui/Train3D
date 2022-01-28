@@ -1,4 +1,4 @@
-import { CatmullRomCurve3, TextureLoader, Vector3 } from "three";
+import { CatmullRomCurve3, Object3D, TextureLoader, Vector3 } from "three";
 import { AbstractGraphic } from "./Abstract.graphic";
 import * as THREE from "three";
 
@@ -6,6 +6,9 @@ export class TrackGraphic extends AbstractGraphic {
     private trajectory!: Vector3[];
     private textureLoad!: TextureLoader;
     private mesh!: THREE.Mesh;
+
+    private leftRailTrack: THREE.Vector3[] = [];
+    private rightRailTrack: THREE.Vector3[] = [];
 
     constructor(trajectory: Vector3[]) {
         super();
@@ -23,20 +26,57 @@ export class TrackGraphic extends AbstractGraphic {
         const geometry = this.createGeometry(curve);
         const material = this.createMaterial(curve);
         this.mesh = new THREE.Mesh(geometry, material);
+        this.buildSideTracks();
+    }
+
+    private buildSideTracks = () => {
+        const width = 0.1;
+        const height = 0.1;
+        const material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(0xd3d3d3),
+            side: THREE.DoubleSide
+        });
+
+        const sideGeometry = this.createSideGeometry(height, width, this.leftRailTrack);
+        const sideMesh = new THREE.Mesh(sideGeometry, material);
+        this.getNode().add(sideMesh);
+
+        const sideGeometry2 = this.createSideGeometry(height, width, this.rightRailTrack);
+        const sideMesh2 = new THREE.Mesh(sideGeometry2, material);
+        this.getNode().add(sideMesh2);
+    }
+
+    private createSideGeometry = (length: number, width: number, points: THREE.Vector3[]) => {
+        const shape = new THREE.Shape();
+        shape.moveTo(0, 0);
+        shape.lineTo(0, width);
+        shape.lineTo(length, width);
+        shape.lineTo(length, 0);
+        shape.lineTo(0, 0);
+
+        const curve = new CatmullRomCurve3(points);
+        const flowSteps = Math.round(Math.round(curve.getLength()) * 2);
+        return new THREE.ExtrudeGeometry(shape, {
+            steps: flowSteps,
+            curveSegments: flowSteps,
+            bevelEnabled: false,
+            depth: length,
+            extrudePath: curve
+        });
     }
 
     private createMaterial = (curve: CatmullRomCurve3) => {
         const texture = this.textureLoad.load('assets/train_track.png');
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(curve.getLength() / 2, 2);
+        texture.repeat.set(curve.getLength() * 2, 2);
 
         const material = [
-            new THREE.MeshBasicMaterial({ color: 'white', side: THREE.DoubleSide }),
             new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
-            new THREE.MeshBasicMaterial({ color: 'white', side: THREE.DoubleSide }),
             new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
-            new THREE.MeshBasicMaterial({ color: 'white', side: THREE.DoubleSide }),
+            new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
+            new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
+            new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
         ];
         return material;
     }
@@ -84,9 +124,7 @@ export class TrackGraphic extends AbstractGraphic {
                 indices[idxCount + 5] = c2;
 
                 geometry.addGroup(idxCount, 6, i); // write group for multi material
-
                 idxCount += 6;
-
             }
 
         }
@@ -94,16 +132,11 @@ export class TrackGraphic extends AbstractGraphic {
         let uvIdxCount = 0;
 
         for (let j = 0; j < lss; j++) {
-
             for (let i = 0; i < wss; i++) {
-
                 uvs[uvIdxCount] = lenList[j] / len;
                 uvs[uvIdxCount + 1] = i / ws;
-
                 uvIdxCount += 2;
-
             }
-
         }
 
         let x, y, z;
@@ -131,10 +164,9 @@ export class TrackGraphic extends AbstractGraphic {
 
             binormal.crossVectors(normal, tangent); // new binormal
             b.push(binormal.clone());
-
         }
 
-        const dw = [-0.36, -0.34, -0.01, 0.01, 0.34, 0.36]; // width from the center line
+        const dw = [-0.55, -0.45, -0.35, 0.35, 0.45, 0.55]; // width from the center line
 
         for (let j = 0; j < lss; j++) {  // length
             for (let i = 0; i < wss; i++) { // width
@@ -148,8 +180,14 @@ export class TrackGraphic extends AbstractGraphic {
 
                 posIdx += 3;
 
-            }
+                if (i === 2) {
+                    this.leftRailTrack.push(new THREE.Vector3(x, y, z));
+                }
 
+                if (i === 4) {
+                    this.rightRailTrack.push(new THREE.Vector3(x, y, z));
+                }
+            }
         }
 
         return geometry;
