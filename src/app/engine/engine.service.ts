@@ -1,6 +1,7 @@
 import { ElementRef, Injectable } from '@angular/core';
 import { Color } from 'three';
 import { DirectionPlanGraphic } from '../core/graphics/DirectionPlan.graphic';
+import { TrainGraphic } from '../core/graphics/Train.graphic';
 import { IGroup } from '../core/interfaces/IGroup';
 import { IViewer } from '../core/interfaces/IViewer';
 import { DataAdapter } from '../data/DataAdapter';
@@ -35,6 +36,10 @@ export class EngineService {
         // create train track graphic
         const trackGraphic = EngineCommon.createTrack(this.dataAdapter.getTrajectory());
         this.mainGroup.addNode(trackGraphic);
+
+        // create train model graphic
+        const trainGraphic = new TrainGraphic(this.dataAdapter.getTrajectory());
+        this.mainGroup.addNode(trainGraphic);
       });
 
       this.mockData.getTunnel().subscribe((tunnels: ITunnelDesc[]) => {
