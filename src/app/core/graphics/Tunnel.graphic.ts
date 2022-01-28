@@ -73,7 +73,7 @@ export class TunnelGraphic extends AbstractGraphic {
 
     private createMaterial = () => {
         if (this.type === TunnelType.UNDER) {
-            return this.createFresnelMaterial(0xffff00, 0.5);
+            return this.createFresnelMaterial(0x0000FF, 0.5);
         }
         return this.createNormalMaterial()
     }
