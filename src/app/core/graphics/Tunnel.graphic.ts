@@ -23,14 +23,15 @@ export class TunnelGraphic extends AbstractGraphic {
     }
 
     private extractCurve = (curve: CatmullRomCurve3, start: number, length: number) => {
-        const segment = 2;
         const childCurve = [];
-        const flowSteps = Math.round(Math.round(curve.getLength()) * segment);
-        const points = curve.getPoints(flowSteps);
+        const sumLength = curve.getLength();
         const end = start + length;
+        let i = start;
 
-        for (let i = start * segment; i <= end * segment; i++) {
-            childCurve.push(points[i]);
+        while (i < end) {
+            const p = curve.getPointAt(i / sumLength);
+            childCurve.push(p);
+            i += 0.05;
         }
 
         return new THREE.CatmullRomCurve3(childCurve);
