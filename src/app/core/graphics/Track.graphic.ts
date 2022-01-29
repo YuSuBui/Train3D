@@ -2,6 +2,12 @@ import { CatmullRomCurve3, Object3D, TextureLoader, Vector3 } from "three";
 import { AbstractGraphic } from "./Abstract.graphic";
 import * as THREE from "three";
 
+export interface TrackTrajectory {
+    curve: CatmullRomCurve3;
+    lengthSegment: number;
+    widthSegment: number;
+}
+
 export class TrackGraphic extends AbstractGraphic {
     private trajectory!: Vector3[];
     private textureLoad!: TextureLoader;
@@ -31,7 +37,7 @@ export class TrackGraphic extends AbstractGraphic {
 
     private buildSideTracks = () => {
         const width = 0.1;
-        const height = 0.1;
+        const height = 0.05;
         const material = new THREE.MeshStandardMaterial({
             color: new THREE.Color(0xd3d3d3),
             side: THREE.DoubleSide
@@ -72,24 +78,111 @@ export class TrackGraphic extends AbstractGraphic {
         texture.repeat.set(curve.getLength() * 2, 2);
 
         const material = [
+            new THREE.MeshBasicMaterial({ color: 0xd3d3d3, side: THREE.DoubleSide }),
             new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
             new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
             new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
             new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
             new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
+            new THREE.MeshBasicMaterial({ color: 0xd3d3d3, side: THREE.DoubleSide }),
         ];
         return material;
     }
 
+    private foo = (curve: CatmullRomCurve3, ls: number) => {
+        const lss = ls + 1;
+
+        let tangent;
+        const normal = new THREE.Vector3();
+        const binormal = new THREE.Vector3(0, 0, 1);
+
+        const t = []; // tangents
+        const n = []; // normals
+        const b = []; // binormals
+
+        for (let j = 0; j < lss; j++) {
+            // to the points
+            tangent = curve.getTangent(j / ls);
+            t.push(tangent.clone());
+
+            normal.crossVectors(tangent, binormal);
+            normal.z = 0; // to prevent lateral slope of the road
+            normal.normalize();
+            n.push(normal.clone());
+
+            binormal.crossVectors(normal, tangent); // new binormal
+            b.push(binormal.clone());
+        }
+
+        return {
+            tangents: t, 
+            normals: n, 
+            binormals: b
+        }
+    }
+
+    private calculateVertices = (vertices: Float32Array, trajectory: TrackTrajectory) => {
+        const {
+            tangents,
+            normals,
+            binormals
+        } = this.foo(trajectory.curve, trajectory.lengthSegment);
+
+        let x, y, z;
+        let posIdx = 0; // position index
+        const points = trajectory.curve.getPoints(trajectory.lengthSegment);
+        const lss = trajectory.lengthSegment + 1;
+        const wss = trajectory.widthSegment + 1;
+        const dw = [-1, -0.55, -0.45, -0.35, 0.35, 0.45, 0.55, 1]; // width from the center line
+
+        for (let j = 0; j < lss; j++) {  // length
+            for (let i = 0; i < wss; i++) { // width
+                x = points[j].x + dw[i] * normals[j].x;
+                z = points[j].z;
+                y = points[j].y + dw[i] * normals[j].y;
+
+                vertices[posIdx] = x;
+                vertices[posIdx + 1] = y;
+                vertices[posIdx + 2] = z;
+
+                posIdx += 3;
+
+                if (i === 3) {
+                    this.leftRailTrack.push(new THREE.Vector3(x, y, z));
+                }
+
+                if (i === 5) {
+                    this.rightRailTrack.push(new THREE.Vector3(x, y, z));
+                }
+            }
+        }
+    }
+
+    private calculateUVs = (uvs: Float32Array, trajectory: TrackTrajectory) => {
+        const lss = trajectory.lengthSegment + 1;
+        const wss = trajectory.widthSegment + 1;
+        const len = trajectory.curve.getLength();
+        const lenList = trajectory.curve.getLengths(trajectory.lengthSegment);
+        let uvIdxCount = 0;
+
+        for (let j = 0; j < lss; j++) {
+            for (let i = 0; i < wss; i++) {
+                uvs[uvIdxCount] = lenList[j] / len;
+                uvs[uvIdxCount + 1] = i / trajectory.widthSegment;
+
+                uvIdxCount += 2;
+            }
+        }
+    }
+
+
     private createGeometry = (curve: CatmullRomCurve3) => {
-        const ls = 1400; // length segments
-        const ws = 5; // width segments 
+        const flowSteps = Math.round(Math.round(curve.getLength()) * 2);
+        const ls = flowSteps; // length segments
+        const ws = 7; // width segments 
         const lss = ls + 1;
         const wss = ws + 1;
-
-        const points = curve.getPoints(ls);
-        const len = curve.getLength();
-        const lenList = curve.getLengths(ls);
+        const trajectory = { curve, lengthSegment: ls, widthSegment: ws };
 
         const faceCount = ls * ws * 2;
         const vertexCount = lss * wss;
@@ -100,8 +193,7 @@ export class TrackGraphic extends AbstractGraphic {
 
         const geometry = new THREE.BufferGeometry();
         geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-        geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+        
 
         let idxCount = 0;
         let a, b1, c1, c2;
@@ -126,69 +218,13 @@ export class TrackGraphic extends AbstractGraphic {
                 geometry.addGroup(idxCount, 6, i); // write group for multi material
                 idxCount += 6;
             }
-
         }
 
-        let uvIdxCount = 0;
+        this.calculateUVs(uvs, trajectory);
+        this.calculateVertices(vertices, trajectory);
 
-        for (let j = 0; j < lss; j++) {
-            for (let i = 0; i < wss; i++) {
-                uvs[uvIdxCount] = lenList[j] / len;
-                uvs[uvIdxCount + 1] = i / ws;
-                uvIdxCount += 2;
-            }
-        }
-
-        let x, y, z;
-        let posIdx = 0; // position index
-
-        let tangent;
-        const normal = new THREE.Vector3();
-        const binormal = new THREE.Vector3(0, 0, 1);
-
-        const t = []; // tangents
-        const n = []; // normals
-        const b = []; // binormals
-
-        for (let j = 0; j < lss; j++) {
-            // to the points
-            tangent = curve.getTangent(j / ls);
-            t.push(tangent.clone());
-
-            normal.crossVectors(tangent, binormal);
-
-            normal.z = 0; // to prevent lateral slope of the road
-
-            normal.normalize();
-            n.push(normal.clone());
-
-            binormal.crossVectors(normal, tangent); // new binormal
-            b.push(binormal.clone());
-        }
-
-        const dw = [-0.55, -0.45, -0.35, 0.35, 0.45, 0.55]; // width from the center line
-
-        for (let j = 0; j < lss; j++) {  // length
-            for (let i = 0; i < wss; i++) { // width
-                x = points[j].x + dw[i] * n[j].x;
-                z = points[j].z;
-                y = points[j].y + dw[i] * n[j].y;
-
-                vertices[posIdx] = x;
-                vertices[posIdx + 1] = y;
-                vertices[posIdx + 2] = z;
-
-                posIdx += 3;
-
-                if (i === 2) {
-                    this.leftRailTrack.push(new THREE.Vector3(x, y, z));
-                }
-
-                if (i === 4) {
-                    this.rightRailTrack.push(new THREE.Vector3(x, y, z));
-                }
-            }
-        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
         return geometry;
     }
