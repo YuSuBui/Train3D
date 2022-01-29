@@ -6,13 +6,12 @@ import { IPropertyChangeListener } from "src/app/data/interfaces/IPropertyChange
 import { IStyle } from "src/app/data/interfaces/IStyle";
 import { Style } from "src/app/data/Style";
 import { Flow } from "three/examples/jsm/modifiers/CurveModifier.js";
-import { GUI } from "dat.gui";
 import { IView } from "../interfaces/IView";
+import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader";
 
 export class TrainGraphic extends AbstractGraphic implements IPropertyChangeListener {
     public IPropertyChangeListener = 'TrainGraphic';
 
-    private objLoader!: OBJLoader;
     private trainModel!: THREE.Object3D;
     private train!: Flow;
     private style!: IStyle;
@@ -21,7 +20,7 @@ export class TrainGraphic extends AbstractGraphic implements IPropertyChangeList
     constructor(trajectory: Vector3[]) {
         super();
         this.trainModel = new THREE.Object3D();
-        this.objLoader = new OBJLoader();
+
         this.setStyle();
         this.path = new THREE.CatmullRomCurve3(trajectory);
         this.loadModelAsync();
@@ -43,23 +42,29 @@ export class TrainGraphic extends AbstractGraphic implements IPropertyChangeList
     }
 
     private readonly loadModelAsync = () => {
-        this.objLoader.load('assets/uploads_files_734199_electrictrain.obj', (model) => {
-            model.traverse(function (child) {
-                if (child instanceof THREE.Mesh && child.material as MeshStandardMaterial) {
-                    child.material.color.setHex(0x626567);
-                    child.material.side = THREE.DoubleSide;
+        const loader = new MTLLoader();
+        loader.load('assets/models/electrictrain.mtl', (material) => {
+            material.preload();
+            const objLoader = new OBJLoader();
+            objLoader.setMaterials(material);
+
+            objLoader.load('assets/models/electrictrain.obj', (model) => {
+                model.traverse(function (child) {
+                    if (child instanceof THREE.Mesh && child.material as MeshStandardMaterial) {
+                        child.material.side = THREE.DoubleSide;
+                    }
+                });
+                if (model.children && model.children[0]) {
+                    const modelNode = model.children[0] as THREE.Mesh;
+                    modelNode.geometry.scale(0.25, 0.15, 0.1);
+                    modelNode.geometry.rotateX(Math.PI * .5);
+                    modelNode.geometry.rotateY(Math.PI);
+                    modelNode.geometry.rotateZ(Math.PI * .5);
                 }
+                this.trainModel = model;
+                const trainModelCoor = new THREE.Box3().setFromObject(this.trainModel);
+                this.setModelPosition(trainModelCoor.max.x - trainModelCoor.min.x);
             });
-            if (model.children && model.children[0]) {
-                const modelNode = model.children[0] as THREE.Mesh;
-                modelNode.geometry.scale(0.22, 0.1, 0.1);
-                modelNode.geometry.rotateX(Math.PI * .5);
-                modelNode.geometry.rotateY(Math.PI);
-                modelNode.geometry.rotateZ(Math.PI * .5);
-            }
-            this.trainModel = model;
-            const trainModelCoor = new THREE.Box3().setFromObject(this.trainModel);
-            this.setModelPosition(trainModelCoor.max.x - trainModelCoor.min.x);
         });
     }
 
