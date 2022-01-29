@@ -30,7 +30,26 @@
             "length": 50,
             "bodyID": 1,
             "bodyOD": 1.2,
-            "startAt": 20
+            "startAt": 20,
+            "settings": {
+                "isIsometricMode": true,
+                "opacity": 0.3,
+                "tunnelColor": "0xa3a3a3",
+                "color": "0x8B4513"
+            }
+        },
+        {
+            "name": "Sea Tunnel2",
+            "length": 30,
+            "bodyID": 1,
+            "bodyOD": 1.2,
+            "startAt": 100,
+            "settings": {
+                "isIsometricMode": true,
+                "opacity": 0.3,
+                "tunnelColor": "0x2a93d5",
+                "color": "0x2a93d5"
+            }
         }
     ]
 }
