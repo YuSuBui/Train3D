@@ -31,7 +31,7 @@ export class TrackGraphic extends AbstractGraphic {
 
     private buildSideTracks = () => {
         const width = 0.1;
-        const height = 0.1;
+        const height = 0.05;
         const material = new THREE.MeshStandardMaterial({
             color: new THREE.Color(0xd3d3d3),
             side: THREE.DoubleSide
@@ -81,8 +81,42 @@ export class TrackGraphic extends AbstractGraphic {
         return material;
     }
 
+    private foo = (curve: CatmullRomCurve3, ls: number) => {
+        const lss = ls + 1;
+
+        let tangent;
+        const normal = new THREE.Vector3();
+        const binormal = new THREE.Vector3(0, 0, 1);
+
+        const t = []; // tangents
+        const n = []; // normals
+        const b = []; // binormals
+
+        for (let j = 0; j < lss; j++) {
+            // to the points
+            tangent = curve.getTangent(j / ls);
+            t.push(tangent.clone());
+
+            normal.crossVectors(tangent, binormal);
+            normal.z = 0; // to prevent lateral slope of the road
+            normal.normalize();
+            n.push(normal.clone());
+
+            binormal.crossVectors(normal, tangent); // new binormal
+            b.push(binormal.clone());
+        }
+
+        return {
+            tangents: t, 
+            normals: n, 
+            binormals: b
+        }
+    }
+
+
     private createGeometry = (curve: CatmullRomCurve3) => {
-        const ls = 1400; // length segments
+        const flowSteps = Math.round(Math.round(curve.getLength()) * 2);
+        const ls = flowSteps; // length segments
         const ws = 5; // width segments 
         const lss = ls + 1;
         const wss = ws + 1;
@@ -139,40 +173,21 @@ export class TrackGraphic extends AbstractGraphic {
             }
         }
 
+        const {
+            tangents,
+            normals,
+            binormals
+        } = this.foo(curve, ls);
+
         let x, y, z;
         let posIdx = 0; // position index
-
-        let tangent;
-        const normal = new THREE.Vector3();
-        const binormal = new THREE.Vector3(0, 0, 1);
-
-        const t = []; // tangents
-        const n = []; // normals
-        const b = []; // binormals
-
-        for (let j = 0; j < lss; j++) {
-            // to the points
-            tangent = curve.getTangent(j / ls);
-            t.push(tangent.clone());
-
-            normal.crossVectors(tangent, binormal);
-
-            normal.z = 0; // to prevent lateral slope of the road
-
-            normal.normalize();
-            n.push(normal.clone());
-
-            binormal.crossVectors(normal, tangent); // new binormal
-            b.push(binormal.clone());
-        }
-
         const dw = [-0.55, -0.45, -0.35, 0.35, 0.45, 0.55]; // width from the center line
 
         for (let j = 0; j < lss; j++) {  // length
             for (let i = 0; i < wss; i++) { // width
-                x = points[j].x + dw[i] * n[j].x;
+                x = points[j].x + dw[i] * normals[j].x;
                 z = points[j].z;
-                y = points[j].y + dw[i] * n[j].y;
+                y = points[j].y + dw[i] * normals[j].y;
 
                 vertices[posIdx] = x;
                 vertices[posIdx + 1] = y;

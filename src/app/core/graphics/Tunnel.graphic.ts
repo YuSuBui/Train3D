@@ -38,8 +38,8 @@ export class TunnelGraphic extends AbstractGraphic {
     }
 
     private createGeometry = (outerRadius: number, innerRadius: number, length: number, curve: CatmullRomCurve3) => {
-        const sAngle = THREE.MathUtils.degToRad(-90);
-        const eAngle = THREE.MathUtils.degToRad(90);
+        const sAngle = THREE.MathUtils.degToRad(-120);
+        const eAngle = THREE.MathUtils.degToRad(120);
 
         const shape = new THREE.Shape();
 
