@@ -20,6 +20,7 @@
     "tunnel": [
         {
             "name": "Train Tunnel 1",
+            "type": "NORMAL",
             "length": 5,
             "bodyID": 1,
             "bodyOD": 1.2,
