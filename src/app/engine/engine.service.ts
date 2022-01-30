@@ -1,6 +1,5 @@
 import { ElementRef, Injectable } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { Color } from 'three';
 import { DirectionPlanGraphic } from '../core/graphics/DirectionPlan.graphic';
 import { SkyBoxGraphic } from '../core/graphics/SkyBox.graphic';
 import { TrainGraphic } from '../core/graphics/Train.graphic';
