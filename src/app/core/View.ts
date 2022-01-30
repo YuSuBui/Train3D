@@ -117,7 +117,7 @@ export class View implements IView {
             this.fov,
             window.innerWidth / window.innerHeight,
             0.1,
-            2000
+            20000
         );
         this.camera.position.x = -5;
         this.camera.position.y = 5;

@@ -1,12 +1,14 @@
 import { ElementRef, Injectable } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { Color } from 'three';
 import { DirectionPlanGraphic } from '../core/graphics/DirectionPlan.graphic';
+import { SkyBoxGraphic } from '../core/graphics/SkyBox.graphic';
 import { TrainGraphic } from '../core/graphics/Train.graphic';
 import { IGroup } from '../core/interfaces/IGroup';
 import { IViewer } from '../core/interfaces/IViewer';
 import { DataAdapter } from '../data/DataAdapter';
 import { IDataAdapter } from '../data/interfaces/IDataAdapter';
-import { ITrajectoryDesc, ITunnelDesc, TunnelType } from '../data/interfaces/IMockData';
+import { IGangZData, ITrajectoryDesc, ITunnelDesc, TunnelType } from '../data/interfaces/IMockData';
 import { MockDataService } from '../services/mock-data.service';
 import { EngineCommon } from './engine.common';
 
@@ -18,6 +20,7 @@ export class EngineService {
   private viewer: IViewer | undefined;
   private mainGroup!: IGroup;
   private dataAdapter!: IDataAdapter;
+  private subscriptions: Subscription[] = [];
 
   constructor(private mockData: MockDataService) { }
 
@@ -27,6 +30,8 @@ export class EngineService {
     EngineCommon.createViewer(this.canvasElement).then((viewer: IViewer) => {
       this.viewer = viewer;
       this.mainGroup = viewer.getWorld().getMainGroup();
+      
+      this.loadSkyBox();
 
       this.mockData.getTrajectory().subscribe((trajectory: ITrajectoryDesc) => {
         this.dataAdapter = new DataAdapter(trajectory);
@@ -52,7 +57,25 @@ export class EngineService {
         });
       });
 
-
+      this.loadListOfGangZ();
     });
   }
+
+  private loadSkyBox = () => {
+    const skybox = new SkyBoxGraphic('purplenebula');
+    this.mainGroup.addNode(skybox);
+    const skybox1 = new SkyBoxGraphic('purplenebula', 1000);
+    this.mainGroup.addNode(skybox1);
+  }
+
+  private loadListOfGangZ = () => {
+    const subscription = this.mockData.getListOfGangZ().subscribe((gangs: IGangZData[]) => {
+      gangs.forEach((gang: IGangZData) => {
+        const gangzGraphic = EngineCommon.createGangZ(gang);
+        this.mainGroup.addNode(gangzGraphic);
+      });
+    });
+
+    this.subscriptions.push(subscription);
+  } 
 }
