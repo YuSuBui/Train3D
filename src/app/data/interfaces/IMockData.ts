@@ -1,5 +1,11 @@
+export enum TunnelType {
+    NORMAL = 'NORMAL',
+    UNDER = 'UNDER',
+}
+
 export interface ITunnelDesc {
     name: string;
+    type: TunnelType;
     length: number;
     bodyID: number;
     bodyOD: number;

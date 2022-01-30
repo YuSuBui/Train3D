@@ -2,16 +2,37 @@ import { AbstractGraphic } from "./Abstract.graphic";
 import * as THREE from "three";
 import { CatmullRomCurve3, Vector3 } from "three";
 import { ITunnelDesc } from "src/app/data/interfaces/IMockData";
+import { FRESNELSHADER } from "./interfaces/IFresnelShader";
+import { IPropertyChangeListener } from "src/app/data/interfaces/IPropertyChangeListener";
+import { IStyle } from "src/app/data/interfaces/IStyle";
+import { Style } from "src/app/data/Style";
 
-export class TunnelGraphic extends AbstractGraphic {
+export class TunnelGraphic extends AbstractGraphic implements IPropertyChangeListener {
+    public IPropertyChangeListener = 'TunnelGraphic';
+
     private tunnel!: any;
+    private style!: IStyle;
     private zFactor = 0.55;
 
     constructor(parameters: ITunnelDesc, trajectory: Vector3[]) {
         super();
+        this.setStyle();
         const curve3 = new THREE.CatmullRomCurve3(trajectory);
         this.build(parameters, curve3);
         this.getNode().add(this.tunnel);
+    }
+
+    private readonly setStyle = () => {
+        this.style = new Style();
+        this.style.addPropertyChangeListener(this);
+    }
+
+    public getStyle(): IStyle {
+        return this.style;
+    }
+
+    public onPropertyChange(property: string, oldValue: any, newValue: any, object: any): void | Promise<void> {
+        
     }
 
     private build = (parameters: ITunnelDesc, curve: CatmullRomCurve3) => {
@@ -27,7 +48,6 @@ export class TunnelGraphic extends AbstractGraphic {
     }
 
     private buildOuterBox = (tunnelCurve: CatmullRomCurve3, outerRadius: number, settings: any) => {
-        
         const material = new THREE.MeshStandardMaterial({
             color: Number(settings.color) || new THREE.Color(0xd3d3d3),
             side: THREE.DoubleSide,
@@ -139,5 +159,21 @@ export class TunnelGraphic extends AbstractGraphic {
             color: new THREE.Color(color),
             side: THREE.DoubleSide
         });
+    }
+
+    private createFresnelMaterial = () => {
+        const uniform = {
+            color: {
+              type: "c",
+              value: this.style.getColor(),
+            },
+            u_opacity: { value: this.style.getOpacity() }
+          }
+          return new THREE.ShaderMaterial({
+            uniforms: uniform,
+            vertexShader: FRESNELSHADER.vertexShader,
+            fragmentShader: FRESNELSHADER.fragmentShader,
+            transparent: this.style.getOpacity() < 1
+          });
     }
 }
