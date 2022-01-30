@@ -27,4 +27,22 @@ export interface ITrajectoryDesc {
 export interface IMockData {
     trajectory: ITrajectoryDesc;
     tunnel: ITunnelDesc[];
+    gangzList?: IGangZData[];
+}
+
+export interface Engine3DPoint {
+    x: number;
+    y: number;
+    z: number;
+}
+export interface IGangZData {
+    objPath: string;
+    mtlPath?: string;
+    scale: number;
+    count: number;
+    rotation: Engine3DPoint;
+    data: {
+        position?: Engine3DPoint,
+        range?: Engine3DPoint
+    }
 }

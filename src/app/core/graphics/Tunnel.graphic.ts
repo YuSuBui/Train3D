@@ -1,6 +1,6 @@
 import { AbstractGraphic } from "./Abstract.graphic";
 import * as THREE from "three";
-import { CatmullRomCurve3, Vector3 } from "three";
+import { CatmullRomCurve3, Object3D, Vector3 } from "three";
 import { ITunnelDesc } from "src/app/data/interfaces/IMockData";
 import { FRESNELSHADER } from "./interfaces/IFresnelShader";
 import { IPropertyChangeListener } from "src/app/data/interfaces/IPropertyChangeListener";
