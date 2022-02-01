@@ -1,4 +1,4 @@
-import { AmbientLight, DirectionalLight, Scene, Vector3, WebGLRenderer } from "three";
+import { AmbientLight, Camera, DirectionalLight, Scene, Vector3, WebGLRenderer } from "three";
 import { IView } from "./interfaces/IView";
 import { IWorld } from "./interfaces/IWorld";
 import * as THREE from "three";
@@ -12,7 +12,7 @@ export class View implements IView {
     private fov: number = 45;
     private canvas!: HTMLCanvasElement;
     private scene!: Scene;
-    private camera!: any;
+    private camera!: THREE.PerspectiveCamera;
     private renderer!: WebGLRenderer;
     private controls!: OrbitControls;
 
@@ -35,7 +35,7 @@ export class View implements IView {
     }
 
     setCameraPosition(value: Vector3): void {
-        this.camera.position.set(value);
+        this.camera.position.set(value.x, value.y, value.z);
     }
 
     getCameraPosition(): Vector3 {
@@ -129,6 +129,7 @@ export class View implements IView {
         this.camera.position.x = -5;
         this.camera.position.y = 5;
         this.camera.position.z = 5;
+        this.camera.zoom = 0.5;
     }
 
     private readonly setupRenderer = () => {
@@ -144,6 +145,7 @@ export class View implements IView {
     private readonly setupControl = () => {
         this.controls = new OrbitControls(this.camera, this.canvas);
         this.controls.target.set(0, 0, 0);
+        this.controls.maxDistance = 300;
         this.controls.update();
     }
 
