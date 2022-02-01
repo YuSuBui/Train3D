@@ -1,4 +1,5 @@
 import { IView } from "./IView";
+import * as THREE from "three";
 
 export interface IGraphic {
     IGraphic: string;
@@ -20,4 +21,6 @@ export interface IGraphic {
     setVisible(visible: boolean): void;
 
     getVisible(): boolean;
+
+    turnOnGlowing(child: THREE.Mesh, level: number): void;
 }

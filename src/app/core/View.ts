@@ -3,6 +3,7 @@ import { IView } from "./interfaces/IView";
 import { IWorld } from "./interfaces/IWorld";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { SelectiveBloomEngine } from "./SelectiveBloomEngine";
 
 export class View implements IView {
     IView: string = 'IView';
@@ -17,7 +18,8 @@ export class View implements IView {
 
     private world!: IWorld;
     private directionalLight!: any;
-
+    private bloomEngine!: SelectiveBloomEngine;
+   
     constructor(canvas: string) {
         this.canvas = <HTMLCanvasElement>document.querySelector(canvas);
         this.setupScene();
@@ -25,6 +27,7 @@ export class View implements IView {
         this.setupRenderer();
         this.setupControl();
         this.setupLights();
+        this.setupBloomEngine();
     }
 
     getCanvas(): HTMLCanvasElement {
@@ -66,6 +69,9 @@ export class View implements IView {
         this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
 
+        // render bloom effects
+        this.bloomEngine.render(this.scene, this.camera);
+
         // drawEnd()
         this.world.drawEnd(this);
     }
@@ -92,6 +98,7 @@ export class View implements IView {
             const canvas = this.renderer.domElement;
             this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
             this.camera.updateProjectionMatrix();
+            this.bloomEngine.setSize(canvas.clientWidth, canvas.clientHeight);
         }
     }
 
@@ -146,5 +153,10 @@ export class View implements IView {
 
         this.directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
         this.scene.add(this.directionalLight);
+    }
+
+    private setupBloomEngine = () => {
+        this.bloomEngine = new SelectiveBloomEngine(this);
+        this.bloomEngine.setupEngine(this.renderer, this.scene, this.camera);
     }
 }
