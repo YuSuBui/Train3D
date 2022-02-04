@@ -1,6 +1,7 @@
 import { ElementRef, Injectable } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { DirectionPlanGraphic } from '../core/graphics/DirectionPlan.graphic';
+import { GalaxyGraphic } from '../core/graphics/Galaxy.graphic';
 import { SkyBoxGraphic } from '../core/graphics/SkyBox.graphic';
 import { TrainGraphic } from '../core/graphics/Train.graphic';
 import { IGroup } from '../core/interfaces/IGroup';
@@ -63,8 +64,9 @@ export class EngineService {
   private loadSkyBox = () => {
     const skybox = new SkyBoxGraphic('purplenebula');
     this.mainGroup.addNode(skybox);
-    const skybox1 = new SkyBoxGraphic('purplenebula', 1000);
-    this.mainGroup.addNode(skybox1);
+    
+    const galaxy = new GalaxyGraphic();
+    this.mainGroup.addNode(galaxy);
   }
 
   private loadListOfGangZ = () => {

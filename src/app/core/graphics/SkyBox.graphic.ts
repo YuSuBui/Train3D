@@ -4,6 +4,8 @@ import { IView } from "../interfaces/IView";
 
 export class SkyBoxGraphic extends AbstractGraphic {
     private mesh!: THREE.Mesh;
+    private sun!: THREE.Mesh;
+    private timer = 0;
 
     constructor(skyboxImage: string, size = 500) {
         super();
@@ -12,16 +14,16 @@ export class SkyBoxGraphic extends AbstractGraphic {
     }
 
     drawBegin(view: IView): void {
+        this.timer += Math.PI / 20;
         this.mesh.rotation.x += 0.001;
         this.mesh.rotation.y += 0.001;
     }
-
 
     private buildCube = (skyboxImage: string, size = 1000) => {
         const materialArray = this.createMaterialArray(skyboxImage);
         const skyboxGeo = new THREE.BoxGeometry(size, size, size);
         this.mesh = new THREE.Mesh(skyboxGeo, materialArray);
-        
+
         this.turnOnGlowing(this.mesh);
         this.getNode().add(this.mesh);
     }
@@ -30,11 +32,11 @@ export class SkyBoxGraphic extends AbstractGraphic {
         const color = new THREE.Color("#FDB813");
         const geometry = new THREE.IcosahedronGeometry(5, 15);
         const material = new THREE.MeshBasicMaterial({ color: color });
-        const sphere = new THREE.Mesh(geometry, material);
-        sphere.position.set(10, -5, -10);
+        this.sun = new THREE.Mesh(geometry, material);
+        this.sun.position.set(10, -5, -10);
 
-        this.turnOnGlowing(sphere);
-        this.getNode().add(sphere);
+        this.turnOnGlowing(this.sun);
+        this.getNode().add(this.sun);
     }
 
     private createMaterialArray = (filename: string) => {
