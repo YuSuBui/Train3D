@@ -112,7 +112,6 @@ export class GalaxyGraphic extends AbstractGraphic {
         const particlesMaterial = new THREE.PointsMaterial({
             size: 0.05,
             // color: '#6cf6fe' //#2aa7d8
-            // color: '#2aa7d8',
             vertexColors: true
         });
 
