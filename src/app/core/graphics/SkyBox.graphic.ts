@@ -1,20 +1,42 @@
 import { AbstractGraphic } from "./Abstract.graphic";
 import * as THREE from "three";
+import { IView } from "../interfaces/IView";
 
 export class SkyBoxGraphic extends AbstractGraphic {
-    private mesh!: any;
+    private mesh!: THREE.Mesh;
+    private sun!: THREE.Mesh;
+    private timer = 0;
 
-    constructor(skyboxImage: string, size = 300) {
+    constructor(skyboxImage: string, size = 500) {
         super();
-        this.foo(skyboxImage, size);
+        this.buildCube(skyboxImage, size);
+        this.buildSun();
     }
 
+    drawBegin(view: IView): void {
+        this.timer += Math.PI / 20;
+        this.mesh.rotation.x += 0.001;
+        this.mesh.rotation.y += 0.001;
+    }
 
-    private foo = (skyboxImage: string, size = 1000) => {
+    private buildCube = (skyboxImage: string, size = 1000) => {
         const materialArray = this.createMaterialArray(skyboxImage);
         const skyboxGeo = new THREE.BoxGeometry(size, size, size);
         this.mesh = new THREE.Mesh(skyboxGeo, materialArray);
+
+        this.turnOnGlowing(this.mesh);
         this.getNode().add(this.mesh);
+    }
+
+    private buildSun = () => {
+        const color = new THREE.Color("#FDB813");
+        const geometry = new THREE.IcosahedronGeometry(5, 15);
+        const material = new THREE.MeshBasicMaterial({ color: color });
+        this.sun = new THREE.Mesh(geometry, material);
+        this.sun.position.set(10, -5, -10);
+
+        this.turnOnGlowing(this.sun);
+        this.getNode().add(this.sun);
     }
 
     private createMaterialArray = (filename: string) => {

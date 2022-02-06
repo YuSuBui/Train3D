@@ -1,6 +1,7 @@
 import { Object3D, Event } from "three";
 import { IGraphic } from "../interfaces/IGraphic";
 import { IView } from "../interfaces/IView";
+import * as THREE from "three";
 
 export class AbstractGraphic implements IGraphic {
     IGraphic: string = 'AbstractGraphic';
@@ -43,5 +44,9 @@ export class AbstractGraphic implements IGraphic {
 
     getVisible(): boolean {
         return this.root.visible;
+    }
+
+    turnOnGlowing(child: THREE.Mesh, level: number = 1): void {
+        child.layers.enable(level);
     }
 }
