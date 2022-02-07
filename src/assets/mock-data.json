@@ -24,10 +24,17 @@
             "length": 5,
             "bodyID": 1,
             "bodyOD": 1.2,
-            "startAt": 0
+            "startAt": 0,
+            "settings": {
+                "isIsometricMode": false,
+                "opacity": 1,
+                "tunnelColor": "#8B4513",
+                "color": "#ffffff"
+            }
         },
         {
             "name": "Train Tunnel2",
+            "type": "NORMAL",
             "length": 50,
             "bodyID": 1,
             "bodyOD": 1.2,
@@ -35,12 +42,13 @@
             "settings": {
                 "isIsometricMode": true,
                 "opacity": 0.3,
-                "tunnelColor": "0xa3a3a3",
-                "color": "0x8B4513"
+                "tunnelColor": "#a3a3a3",
+                "color": "#8B4513"
             }
         },
         {
             "name": "Sea Tunnel2",
+            "type": "UNDER",
             "length": 30,
             "bodyID": 1,
             "bodyOD": 1.2,
@@ -48,8 +56,8 @@
             "settings": {
                 "isIsometricMode": true,
                 "opacity": 0.3,
-                "tunnelColor": "0x2a93d5",
-                "color": "0x2a93d5"
+                "tunnelColor": "#2a93d5",
+                "color": "#2a93d5"
             }
         }
     ],

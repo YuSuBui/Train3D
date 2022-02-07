@@ -1,5 +1,5 @@
 import { ElementRef } from "@angular/core";
-import { Vector3 } from "three";
+import { Color, Vector3 } from "three";
 import { GangZGraphic } from "../core/graphics/GangZ.graphic";
 import { TrackGraphic } from "../core/graphics/Track.graphic";
 import { TunnelGraphic } from "../core/graphics/Tunnel.graphic";
@@ -24,5 +24,9 @@ export class EngineCommon {
 
     public static createGangZ = (parameters: IGangZData) => {
         return new GangZGraphic(parameters);
+    };
+
+    public static getColor = (color: string) => {
+        return new Color(color);
     };
 }

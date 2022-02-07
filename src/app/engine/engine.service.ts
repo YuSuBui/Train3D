@@ -50,9 +50,11 @@ export class EngineService {
       this.mockData.getTunnel().subscribe((tunnels: ITunnelDesc[]) => {
         tunnels.forEach((tunnel: ITunnelDesc) => {
           const tunnelGraphic = EngineCommon.createTunnel(tunnel, this.dataAdapter.getTrajectory());
-          if (tunnel.type === TunnelType.UNDER) {
-            tunnelGraphic.getStyle().setOpacity(0.5);
-          }
+          tunnelGraphic.getStyle().setType(TunnelType[tunnel.type]);
+          tunnelGraphic.getStyle().setOpacity(tunnel.settings.opacity);
+          tunnelGraphic.getStyle().setColor(EngineCommon.getColor(tunnel.settings.color));
+          tunnelGraphic.getStyle().setTunnelColor(EngineCommon.getColor(tunnel.settings.tunnelColor));
+          tunnelGraphic.getStyle().setIsometricMode(tunnel.settings.isIsometricMode);
           this.mainGroup.addNode(tunnelGraphic);
         });
       });

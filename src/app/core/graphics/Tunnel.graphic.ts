@@ -1,63 +1,105 @@
 import { AbstractGraphic } from "./Abstract.graphic";
 import * as THREE from "three";
-import { CatmullRomCurve3, Object3D, Vector3 } from "three";
-import { ITunnelDesc } from "src/app/data/interfaces/IMockData";
+import { CatmullRomCurve3, Color, Mesh, MeshStandardMaterial, Vector3 } from "three";
+import { ITunnelDesc, TunnelType } from "src/app/data/interfaces/IMockData";
 import { FRESNELSHADER } from "./interfaces/IFresnelShader";
 import { IPropertyChangeListener } from "src/app/data/interfaces/IPropertyChangeListener";
-import { IStyle } from "src/app/data/interfaces/IStyle";
-import { Style } from "src/app/data/Style";
+import { ITunnelStyle } from "src/app/data/interfaces/ITunnelStyle";
+import { TunnelStyle, TunnelStyleProperty } from "src/app/data/TunnelStyle";
 
 export class TunnelGraphic extends AbstractGraphic implements IPropertyChangeListener {
     public IPropertyChangeListener = 'TunnelGraphic';
 
-    private tunnel!: any;
-    private style!: IStyle;
+    private parameters!: ITunnelDesc;
+    private tunnel!: Mesh;
+    private sideMesh!: Mesh;
+    private style!: ITunnelStyle;
     private zFactor = 0.55;
+    private tunnelCurve!: CatmullRomCurve3;
 
     constructor(parameters: ITunnelDesc, trajectory: Vector3[]) {
         super();
         this.setStyle();
         const curve3 = new THREE.CatmullRomCurve3(trajectory);
-        this.build(parameters, curve3);
+        this.parameters = parameters;
+        this.tunnelCurve = this.extractCurve(curve3, parameters.startAt, parameters.length);
+
+        this.build(this.parameters, this.tunnelCurve);
+        this.buildOuterBox(this.tunnelCurve, this.parameters.bodyOD);
+
+        this.getNode().add(this.sideMesh);
         this.getNode().add(this.tunnel);
     }
 
     private readonly setStyle = () => {
-        this.style = new Style();
+        this.style = new TunnelStyle();
         this.style.addPropertyChangeListener(this);
     }
 
-    public getStyle(): IStyle {
+    public getStyle(): ITunnelStyle {
         return this.style;
     }
 
     public onPropertyChange(property: string, oldValue: any, newValue: any, object: any): void | Promise<void> {
-        
+        if (property === TunnelStyleProperty.SINGLE_COLOR) {
+            this.changeColor(this.sideMesh, this.style.getColor());
+        }
+        if (property === TunnelStyleProperty.TUNNEL_COLOR) {
+            const material = this.createMaterial();
+            this.tunnel.material = material;
+            material.needsUpdate = true;
+        }
+        if (property === TunnelStyleProperty.OPACITY) {
+            this.changeOpacity(this.sideMesh, this.style.getOpacity());
+        }
+        if (property === TunnelStyleProperty.ISOMETRIC_MODE) {
+            this.disposeOuterBox();
+            this.buildOuterBox(this.tunnelCurve, this.parameters.bodyOD);
+            this.getNode().add(this.sideMesh);
+        }
+
     }
 
-    private build = (parameters: ITunnelDesc, curve: CatmullRomCurve3) => {
-        const tunnelCurve = this.extractCurve(curve, parameters.startAt, parameters.length);
-        const material = this.createMaterial(parameters.settings || {});
+    private readonly disposeOuterBox = () => {
+        if (this.sideMesh) {
+            this.getNode().remove(this.sideMesh);
+        }
+    }
+
+    private readonly changeColor = (mesh: Mesh, color: Color) => {
+        const material = mesh.material as MeshStandardMaterial;
+        material.color.setHex(color.getHex());
+        material.needsUpdate = true;
+    }
+
+    private readonly changeOpacity = (mesh: Mesh, opacity: number) => {
+        const material = mesh.material as MeshStandardMaterial;
+        material.opacity = this.style.getOpacity();
+        material.transparent = this.style.getOpacity() < 1;
+        material.needsUpdate = true;
+    }
+
+    private readonly build = (parameters: ITunnelDesc, tunnelCurve: CatmullRomCurve3) => {
+        const material = this.createMaterial();
         const geometry = this.createGeometry(parameters.bodyOD, parameters.bodyID, parameters.length, tunnelCurve);
+        geometry.rotateX(-Math.PI / 2);
         const tunnel = new THREE.Mesh(geometry, material);
-        tunnel.translateZ(-this.zFactor);
+        tunnel.rotateX(Math.PI / 2);
+        tunnel.translateY(-this.zFactor);
 
         this.tunnel = tunnel;
-
-        this.buildOuterBox(tunnelCurve, parameters.bodyOD, parameters.settings || {});
     }
 
-    private buildOuterBox = (tunnelCurve: CatmullRomCurve3, outerRadius: number, settings: any) => {
+    private readonly buildOuterBox = (tunnelCurve: CatmullRomCurve3, outerRadius: number) => {
         const material = new THREE.MeshStandardMaterial({
-            color: Number(settings.color) || new THREE.Color(0xd3d3d3),
+            color: this.style.getColor(),
             side: THREE.DoubleSide,
-            transparent: settings.opacity < 1,
-            opacity: settings.opacity
+            transparent: this.style.getOpacity() < 1,
+            opacity: this.style.getOpacity()
         });
 
-        const sideGeometry = this.createBoxGeometry(tunnelCurve, outerRadius, settings.isIsometricMode);
-        const sideMesh = new THREE.Mesh(sideGeometry, material);
-        this.getNode().add(sideMesh);
+        const sideGeometry = this.createBoxGeometry(tunnelCurve, outerRadius, this.style.isIsometricMode());
+        this.sideMesh = new THREE.Mesh(sideGeometry, material);
     }
 
     private createBoxGeometry = (curve: CatmullRomCurve3, outerRadius: number, isIsometricMode: boolean = false) => {
@@ -95,7 +137,7 @@ export class TunnelGraphic extends AbstractGraphic implements IPropertyChangeLis
 
         return shape;
     }
-    
+
     private buildIsometricShape = (length: number, width: number, outerRadius: number) => {
         const start = length / 2;
         const end = width / 2;
@@ -118,7 +160,7 @@ export class TunnelGraphic extends AbstractGraphic implements IPropertyChangeLis
         shape.lineTo(-start + this.zFactor, -end);
 
         return shape;
-    } 
+    }
 
     private extractCurve = (curve: CatmullRomCurve3, start: number, length: number) => {
         const childCurve = [];
@@ -153,27 +195,35 @@ export class TunnelGraphic extends AbstractGraphic implements IPropertyChangeLis
         });
     }
 
-    private createMaterial = (settings: any) => {
-        const color = Number(settings.tunnelColor) || 0x8B4513;
+    private createMaterial = () => {
+        if (this.style.getType() === TunnelType.NORMAL) {
+            return this.createNormalMaterial(this.style.getTunnelColor(), 1);
+        }
+        return this.createFresnelMaterial(this.style.getTunnelColor(), 1);
+    }
+
+    private createNormalMaterial = (color: Color, opacity: number) => {
         return new THREE.MeshStandardMaterial({
-            color: new THREE.Color(color),
-            side: THREE.DoubleSide
+            color: color,
+            side: THREE.DoubleSide,
+            opacity: opacity,
+            transparent: opacity < 1
         });
     }
 
-    private createFresnelMaterial = () => {
+    private createFresnelMaterial = (color: Color, opacity: number) => {
         const uniform = {
             color: {
-              type: "c",
-              value: this.style.getColor(),
+                type: "c",
+                value: color,
             },
-            u_opacity: { value: this.style.getOpacity() }
-          }
-          return new THREE.ShaderMaterial({
+            u_opacity: { value: opacity }
+        }
+        return new THREE.ShaderMaterial({
             uniforms: uniform,
             vertexShader: FRESNELSHADER.vertexShader,
             fragmentShader: FRESNELSHADER.fragmentShader,
-            transparent: this.style.getOpacity() < 1
-          });
+            transparent: opacity < 1
+        });
     }
 }

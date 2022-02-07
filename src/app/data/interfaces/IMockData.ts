@@ -10,11 +10,11 @@ export interface ITunnelDesc {
     bodyID: number;
     bodyOD: number;
     startAt: number;
-    settings?: {
+    settings: {
         color: string;
         opacity: number;
         isIsometricMode: boolean;
-        tunnelColor: number | string;
+        tunnelColor: string;
     }
 }
 
