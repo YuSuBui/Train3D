@@ -16,6 +16,7 @@ export class TrainGraphic extends AbstractGraphic implements IPropertyChangeList
     private train!: Flow;
     private style!: IStyle;
     private path!: CatmullRomCurve3;
+    private flowSteps!: number;
 
     constructor(trajectory: Vector3[]) {
         super();
@@ -23,6 +24,7 @@ export class TrainGraphic extends AbstractGraphic implements IPropertyChangeList
 
         this.setStyle();
         this.path = new THREE.CatmullRomCurve3(trajectory);
+        this.flowSteps = Math.round(Math.round(this.path.getLength()) * 2);
         this.loadModelAsync();
     }
 
@@ -36,6 +38,9 @@ export class TrainGraphic extends AbstractGraphic implements IPropertyChangeList
     }
 
     drawBegin(view: IView): void {
+        if (this.train) {
+            this.train.moveAlongCurve(1 / this.flowSteps);
+        }
     }
 
     public onPropertyChange(property: string, oldValue: any, newValue: any, object: any): void | Promise<void> {
@@ -69,10 +74,13 @@ export class TrainGraphic extends AbstractGraphic implements IPropertyChangeList
     }
 
     private setModelPosition = (start: number) => {
-        if (this.trainModel) {
-            this.train = new Flow(this.trainModel as any);
+        if (this.train) {
             this.train.updateCurve(0, this.path);
-            this.train.uniforms.spineOffset.value = (-start / 2);
+            this.train.uniforms.spineOffset.value = (start / 2); // to do: not hard code - BUG
+        } else {
+            this.train = new Flow(this.trainModel as any, this.flowSteps);
+            this.train.updateCurve(0, this.path);
+            this.train.uniforms.spineOffset.value = (start / 2); // to do: not hard code
             this.getNode().add(this.train.object3D);
         }
     }
