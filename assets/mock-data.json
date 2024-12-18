@@ -1,0 +1,104 @@
+{
+    "trajectory": {
+        "trajectoryX": [
+            0, 0, 0, 0, 0,
+            5, 20, 50, 30, 
+            10, 5, 0, 0
+        ],
+        "trajectoryY": [
+            0, -5, -10, -15, -20, 
+            -45, -45, -30, -10,
+            20, 20, 5, 1
+        ],
+        "trajectoryZ": [
+            0, 0, 0, 0, 0, 
+            0, 0, 0, 0, 0, 
+            0, 0, 0, 0, 0, 0, 0, 0,
+            5, 10, 10, 0
+        ]
+    },
+    "tunnel": [
+        {
+            "name": "Train Tunnel 1",
+            "type": "NORMAL",
+            "length": 5,
+            "bodyID": 1,
+            "bodyOD": 1.2,
+            "startAt": 0
+        },
+        {
+            "name": "Train Tunnel2",
+            "length": 50,
+            "bodyID": 1,
+            "bodyOD": 1.2,
+            "startAt": 20,
+            "settings": {
+                "isIsometricMode": true,
+                "opacity": 0.3,
+                "tunnelColor": "0xa3a3a3",
+                "color": "0x8B4513"
+            }
+        },
+        {
+            "name": "Sea Tunnel2",
+            "length": 30,
+            "bodyID": 1,
+            "bodyOD": 1.2,
+            "startAt": 100,
+            "settings": {
+                "isIsometricMode": true,
+                "opacity": 0.3,
+                "tunnelColor": "0x2a93d5",
+                "color": "0x2a93d5"
+            }
+        }
+    ],
+    "gangzList": [
+        {
+            "objPath": "assets/models/orange_fish/fish.obj",
+            "mtlPath": "assets/models/orange_fish/fish.mtl",
+            "scale": 0.01,
+            "count": 50,
+            "rotation": {
+                "x": 1,
+                "y": 0,
+                "z": 0
+            },
+            "data": {
+                "position": {
+                    "x": 0,
+                    "y": 5,
+                    "z": 2
+                },
+                "range": {
+                    "x": -3,
+                    "y": -3,
+                    "z": 2
+                }
+            }
+        },
+        {
+            "objPath": "assets/models/angel_fish/angel_fish.obj",
+            "mtlPath": "assets/models/angel_fish/angel_fish.mtl",
+            "scale": 0.2,
+            "count": 20,
+            "rotation": {
+                "x": 4,
+                "y": 2,
+                "z": -0.5
+            },
+            "data": {
+                "position": {
+                    "x": 5,
+                    "y": 5,
+                    "z": 4
+                },
+                "range": {
+                    "x": -6,
+                    "y": -4,
+                    "z": 2
+                }
+            }
+        }
+    ]
+}
